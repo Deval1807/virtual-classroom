@@ -11,14 +11,6 @@ The Virtual Classroom is a Node.js-based application designed to facilitate onli
 - **File Uploads**: Uses AWS S3 for storing assignment files and submissions.
 - **Notifications**: Sends email reminders to students for upcoming assignment deadlines.
 
-## Deployed Server
-
-The Virtual Classroom application is deployed and accessible at the following link:
-
-**[Deployed Server URL](http://virtual-classroom-env.eba-48psufpg.ap-south-1.elasticbeanstalk.com/)**
-
-**[API Docs](http://virtual-classroom-env.eba-48psufpg.ap-south-1.elasticbeanstalk.com/api-docs)** -> Change the server from local to the deployed URL to hit the APIs
-
 ---
 
 ## High-Level Architecture
