@@ -1,0 +1,393 @@
+openapi: 3.0.0
+info:
+  title: Virtual Classroom API
+  description: API documentation for the Virtual Classroom application.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000/api
+    description: Local development server
+  - url: http://virtual-classroom-env.eba-48psufpg.ap-south-1.elasticbeanstalk.com/api
+    description: Deployed server
+
+paths:
+  /login:
+    post:
+      summary: User login
+      description: Authenticates a user and returns a JWT token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: johndoe
+                password:
+                  type: string
+                  example: password123
+      responses:
+        200:
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Invalid username or password"
+
+  /assignments:
+    post:
+      summary: Create an assignment
+      description: Allows a tutor to create a new assignment.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: Math Assignment
+                description:
+                  type: string
+                  example: Solve the given problems.
+                publishedAt:
+                  type: string
+                  format: date-time
+                  example: 2023-10-01T10:00:00Z
+                dueDate:
+                  type: string
+                  format: date-time
+                  example: 2023-10-15T10:00:00Z
+                file:
+                  type: string
+                  format: binary
+                studentIds:
+                  type: array
+                  items:
+                    type: integer
+                  example: [1, 2, 3]
+      responses:
+        201:
+          description: Assignment created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Assignment created successfully"
+                  assignment:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      title:
+                        type: string
+                        example: Math Assignment
+                      description:
+                        type: string
+                        example: Solve the given problems.
+                      publishedAt:
+                        type: string
+                        format: date-time
+                        example: 2023-10-01T10:00:00Z
+                      dueDate:
+                        type: string
+                        format: date-time
+                        example: 2023-10-15T10:00:00Z
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Only tutors can create assignments"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error creating assignment"
+
+    get:
+      summary: Get assignments
+      description: Retrieves assignments based on user role and filters.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: publishedAt
+          in: query
+          description: Filter assignments by publication status (SCHEDULED or ONGOING).
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter assignments by status (ALL, PENDING, OVERDUE, SUBMITTED).
+          schema:
+            type: string
+      responses:
+        200:
+          description: List of assignments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    title:
+                      type: string
+                      example: Math Assignment
+                    description:
+                      type: string
+                      example: Solve the given problems.
+                    publishedAt:
+                      type: string
+                      format: date-time
+                      example: 2023-10-01T10:00:00Z
+                    dueDate:
+                      type: string
+                      format: date-time
+                      example: 2023-10-15T10:00:00Z
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error fetching assignments"
+
+  /assignments/{id}:
+    patch:
+      summary: Update an assignment
+      description: Allows a tutor to update an existing assignment.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                dueDate:
+                  type: string
+                  format: date-time
+                publishedAt:
+                  type: string
+                  format: date-time
+                file:
+                  type: string
+                  format: binary
+      responses:
+        200:
+          description: Assignment updated successfully
+        403:
+          description: Forbidden
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+
+    delete:
+      summary: Delete an assignment
+      description: Allows a tutor to delete an assignment.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Assignment deleted successfully
+        403:
+          description: Forbidden
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+
+  /assignments/submissions:
+    post:
+      summary: Add a submission
+      description: Allows a student to submit an assignment.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                assignmentId:
+                  type: integer
+                  example: 1
+                file:
+                  type: string
+                  format: binary
+      responses:
+        201:
+          description: Submission added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Submission added successfully"
+                  submission:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 101
+                      assignmentId:
+                        type: integer
+                        example: 1
+                      studentId:
+                        type: integer
+                        example: 202
+                      s3Url:
+                        type: string
+                        example: "https://virtual-classroom-bucket-123.s3.ap-south-1.amazonaws.com/unique-file-key.pdf"
+                      submittedAt:
+                        type: string
+                        format: date-time
+                        example: "2023-10-01T12:00:00Z"
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Only students can submit assignments"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error adding submission"
+
+  /assignments/submissions/{assignmentId}:
+    get:
+      summary: Get submissions for an assignment
+      description: Retrieves submissions for a specific assignment.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: assignmentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: List of submissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 101
+                    assignmentId:
+                      type: integer
+                      example: 1
+                    studentId:
+                      type: integer
+                      example: 202
+                    studentUsername:
+                      type: string
+                      example: "john_doe"
+                    s3Url:
+                      type: string
+                      example: "https://virtual-classroom-bucket-123.s3.ap-south-1.amazonaws.com/unique-file-key.pdf"
+                    submittedAt:
+                      type: string
+                      format: date-time
+                      example: "2023-10-01T12:00:00Z"
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "You are not authorized to view submissions for this assignment"
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error fetching submissions"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
